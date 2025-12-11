@@ -8,12 +8,12 @@ from typing import (
     Callable,
     Set,
     Deque,
-    # Dict,
+    Dict,
     Optional,
     Protocol,
 )
 
-# from heapq import heappush, heappop
+from heapq import heappush, heappop
 
 T = TypeVar("T")
 
@@ -59,6 +59,30 @@ class Queue(Generic[T]):
         return repr(self._container)
 
 
+class PriorityQueue(Generic[T]):
+    """
+    使用 heappush heappop 在list 中实现优先队列
+    通常意味着内部将采用二叉堆
+    压入和弹出的操作复杂度为 Olog(n)
+    """
+
+    def __init__(self) -> None:
+        self._container: List[T] = []
+
+    @property
+    def empty(self) -> bool:
+        return not self._container
+
+    def push(self, item: T) -> None:
+        heappush(self._container, item)
+
+    def pop(self) -> T:
+        return heappop(self._container)
+
+    def __repr__(self) -> str:
+        return repr(self._container)
+
+
 def linear_contains(iterable: Iterable[T], key: T) -> bool:
     for item in iterable:
         if item == key:
@@ -74,6 +98,8 @@ class Node(Generic[T]):
     (或从一个位置到另一个位置)
 
     cost, heuristic 用于 A* 算法中
+    heappush heappop 使用 < 小于操作符进行比较 所以需要实现 __lt__
+    f(n) 简单地将 cost 和 heuristic 属性相加
     """
 
     def __init__(
@@ -168,6 +194,55 @@ def bfs(
                 continue
             explored.add(current_state)
             frontier.push(Node(child, current_node))
+    return None
+
+
+def astar(
+    initial: T,
+    goal_test: Callable[[T], bool],
+    successors: Callable[[T], List[T]],
+    heuristic: Callable[[T], float],
+) -> Optional[Node[T]]:
+    """
+    Docstring for astar
+    astar 搜索旨在找到从起点到目标状态的最短路径
+    astar 搜索将结合运用代价函数和启发函数，把搜索集中到最可能快速抵达目标的路径上
+    代价函数 const g(n) 会检查抵达指定状态的成本
+    在求解迷宫的场景， 成本是指已经走过多少多少步才能达到当前的状态
+    每一跳的成本视为1
+
+    启发式函数 heuristics h(n) 则给出了从当前状态到目标状态的成本估算
+    到达任一状态的总成本为 f(n) = g(n) + h(n)
+    从 frontier选取探索的下一状态式， Astar 搜索将选择f(n) 最低的状态
+
+
+    :param initial: Description
+    :type initial: T
+    :param goal_test: Description
+    :type goal_test: Callable[[T], bool]
+    :param successors: Description
+    :type successors: Callable[[T], List[T]]
+    :param heuristic: Description
+    :type heuristic: Callable[[T], float]
+    :return: Description
+    :rtype: Node[T] | None
+    """
+    frontier: PriorityQueue[Node[T]] = PriorityQueue()
+    frontier.push(Node(initial, None, 0.0, heuristic(initial)))
+    explored: Dict[T, float] = {initial: 0.0}
+
+    while not frontier.empty:
+        current_node: Node[T] = frontier.pop()
+        current_state = current_node.state
+
+        if goal_test(current_state):
+            return current_node
+
+        for child in successors(current_state):
+            new_cost: float = current_node.cost + 1
+            if child not in explored or explored[child] > new_cost:
+                explored[child] = new_cost
+                frontier.push(Node(child, current_node, new_cost, heuristic(child)))
     return None
 
 

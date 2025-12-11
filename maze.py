@@ -3,7 +3,7 @@ from typing import List, NamedTuple, Callable, Optional
 import random
 
 from math import sqrt
-from generic_search import dfs, bfs, Node, node_to_path
+from generic_search import dfs, bfs, astar, Node, node_to_path
 
 # from generic_search import dts, bfs, node_to_path， astar, Node
 
@@ -102,6 +102,49 @@ class Maze:
         return output
 
 
+def euclidean_distance(goal: MazeLocation) -> Callable[[MazeLocation], float]:
+    """
+    Docstring for euclidean_distance
+    欧式距离 两点间最短时直线距离
+    采用闭包的形式
+    distance 将获取传入的 goal 参数
+    每次调用 distance() 都可以引用此变量(持久性)
+    这种做法可以创建参数较少的函数
+
+    :param goal: Description
+    :type goal: MazeLocation
+    :return: Description
+    :rtype: Callable[[MazeLocation], float]
+    """
+
+    def distance(ml: MazeLocation) -> float:
+        xdist: int = ml.column - goal.column
+        ydist: int = ml.row - goal.row
+        return sqrt((xdist * xdist) + (ydist * ydist))
+
+    return distance
+
+
+def manhattan_distance(goal: MazeLocation) -> Callable[[MazeLocation], float]:
+    """
+    Docstring for manhattan_distance
+    曼哈顿距离
+    获得两个迷宫位置之间的行数差，并将其与列数差相加
+
+    :param goal: Description
+    :type goal: MazeLocation
+    :return: Description
+    :rtype: Callable[[MazeLocation], float]
+    """
+
+    def distance(ml: MazeLocation) -> float:
+        xdist: int = abs(ml.column - goal.column)
+        ydist: int = abs(ml.row - goal.row)
+        return xdist + ydist
+
+    return distance
+
+
 if __name__ == "__main__":
     maze: Maze = Maze()
     print(maze)
@@ -126,3 +169,15 @@ if __name__ == "__main__":
         maze.mark(path2)
         print(maze)
         maze.clear(path2)
+
+    distance = manhattan_distance(maze.goal)
+    solution3: Optional[Node[MazeLocation]] = astar(
+        maze.start, maze.goal_test, maze.successors, distance
+    )
+    if solution3 is None:
+        print("No solution")
+    else:
+        path3: List[MazeLocation] = node_to_path(solution3)
+        maze.mark(path3)
+        print(maze)
+        maze.clear(path3)
