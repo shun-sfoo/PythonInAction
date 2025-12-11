@@ -3,7 +3,7 @@ from typing import List, NamedTuple, Callable, Optional
 import random
 
 from math import sqrt
-from generic_search import dfs, Node, node_to_path
+from generic_search import dfs, bfs, Node, node_to_path
 
 # from generic_search import dts, bfs, node_to_path， astar, Node
 
@@ -115,3 +115,14 @@ if __name__ == "__main__":
         maze.mark(path1)
         print(maze)
         maze.clear(path1)
+
+    solution2: Optional[Node[MazeLocation]] = bfs(
+        maze.start, maze.goal_test, maze.successors
+    )
+    if solution2 is None:
+        print("No solution")
+    else:
+        path2: List[MazeLocation] = node_to_path(solution2)
+        maze.mark(path2)
+        print(maze)
+        maze.clear(path2)

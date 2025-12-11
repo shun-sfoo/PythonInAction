@@ -7,7 +7,7 @@ from typing import (
     List,
     Callable,
     Set,
-    # Deque,
+    Deque,
     # Dict,
     Optional,
     Protocol,
@@ -36,6 +36,24 @@ class Stack(Generic[T]):
 
     def pop(self) -> T:
         return self._container.pop()
+
+    def __repr__(self) -> str:
+        return repr(self._container)
+
+
+class Queue(Generic[T]):
+    def __init__(self) -> None:
+        self._container: Deque[T] = Deque()
+
+    @property
+    def empty(self) -> bool:
+        return not self._container
+
+    def push(self, item: T) -> None:
+        self._container.append(item)
+
+    def pop(self) -> T:
+        return self._container.popleft()
 
     def __repr__(self) -> str:
         return repr(self._container)
@@ -116,6 +134,39 @@ def dfs(
             if child in explored:
                 continue
             explored.add(child)
+            frontier.push(Node(child, current_node))
+    return None
+
+
+def bfs(
+    initial: T, goal_test: Callable[[T], bool], successors: Callable[[T], List[T]]
+) -> Optional[Node[T]]:
+    """
+    Docstring for bfs
+    与dts代码一样， 只是底层从 LIFO 的栈 List 实现， 变成了 FIFO队列 Queue实现
+
+    :param initial: Description
+    :type initial: T
+    :param goal_test: Description
+    :type goal_test: Callable[[T], bool]
+    :param successors: Description
+    :type successors: Callable[[T], List[T]]
+    :return: Description
+    :rtype: Node[T] | None
+    """
+    frontier: Queue[Node[T]] = Queue()
+    frontier.push(Node(initial, None))
+    explored: Set[T] = {initial}
+
+    while not frontier.empty:
+        current_node: Node[T] = frontier.pop()
+        current_state = current_node.state
+        if goal_test(current_state):
+            return current_node
+        for child in successors(current_state):
+            if child in explored:
+                continue
+            explored.add(current_state)
             frontier.push(Node(child, current_node))
     return None
 
